@@ -1146,6 +1146,7 @@ CLUSTER_SYNTHESIS_COMPLETE:
 			}
 		}
 
+		// server defaults
 		server := &http.Server{
 			Handler:           handler,
 			ReadHeaderTimeout: 10 * time.Second,
@@ -1153,6 +1154,37 @@ CLUSTER_SYNTHESIS_COMPLETE:
 			IdleTimeout:       5 * time.Minute,
 			ErrorLog:          c.logger.StandardLogger(nil),
 		}
+
+		// override server defaults with config values for read/write/idle timeouts if configured
+		if readTimeoutInterface, ok := ln.config["read_timeout"]; ok {
+			if readTimeoutStr, ok := readTimeoutInterface.(string); ok {
+				readTimeout, err := parseutil.ParseDurationSecond(readTimeoutStr)
+				if err == nil {
+					server.ReadTimeout = readTimeout
+				}
+			}
+		}
+
+		if writeTimeoutInterface, ok := ln.config["write_timeout"]; ok {
+			if writeTimeoutStr, ok := writeTimeoutInterface.(string); ok {
+				writeTimeout, err := parseutil.ParseDurationSecond(writeTimeoutStr)
+				if err == nil {
+					server.WriteTimeout = writeTimeout
+				}
+			}
+		}
+
+		if idleTimeoutInterface, ok := ln.config["idle_timeout"]; ok {
+			if idleTimeoutStr, ok := idleTimeoutInterface.(string); ok {
+				idleTimeout, err := parseutil.ParseDurationSecond(idleTimeoutStr)
+				if err == nil {
+					server.IdleTimeout = idleTimeout
+				}
+			}
+		}
+
+		fmt.Printf("\n\nserver:\n%#v\n", server)
+
 		go server.Serve(ln.Listener)
 	}
 
