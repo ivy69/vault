@@ -1156,34 +1156,41 @@ CLUSTER_SYNTHESIS_COMPLETE:
 		}
 
 		// override server defaults with config values for read/write/idle timeouts if configured
-		if readTimeoutInterface, ok := ln.config["read_timeout"]; ok {
-			if readTimeoutStr, ok := readTimeoutInterface.(string); ok {
-				readTimeout, err := parseutil.ParseDurationSecond(readTimeoutStr)
-				if err == nil {
-					server.ReadTimeout = readTimeout
-				}
+		if readHeaderTimeoutInterface, ok := ln.config["http_read_header_timeout"]; ok {
+			readHeaderTimeout, err := parseutil.ParseDurationSecond(readHeaderTimeoutInterface)
+			if err != nil {
+				server.ErrorLog.Fatal(
+					errwrap.Wrapf("Error parsing time value for http_read_header_timeout: {{err}}", err))
 			}
+			server.ReadHeaderTimeout = readHeaderTimeout
 		}
 
-		if writeTimeoutInterface, ok := ln.config["write_timeout"]; ok {
-			if writeTimeoutStr, ok := writeTimeoutInterface.(string); ok {
-				writeTimeout, err := parseutil.ParseDurationSecond(writeTimeoutStr)
-				if err == nil {
-					server.WriteTimeout = writeTimeout
-				}
+		if readTimeoutInterface, ok := ln.config["http_read_timeout"]; ok {
+			readTimeout, err := parseutil.ParseDurationSecond(readTimeoutInterface)
+			if err != nil {
+				server.ErrorLog.Fatal(
+					errwrap.Wrapf("Error parsing time value for http_read_timeout: {{err}}", err))
 			}
+			server.ReadTimeout = readTimeout
 		}
 
-		if idleTimeoutInterface, ok := ln.config["idle_timeout"]; ok {
-			if idleTimeoutStr, ok := idleTimeoutInterface.(string); ok {
-				idleTimeout, err := parseutil.ParseDurationSecond(idleTimeoutStr)
-				if err == nil {
-					server.IdleTimeout = idleTimeout
-				}
+		if writeTimeoutInterface, ok := ln.config["http_write_timeout"]; ok {
+			writeTimeout, err := parseutil.ParseDurationSecond(writeTimeoutInterface)
+			if err != nil {
+				server.ErrorLog.Fatal(
+					errwrap.Wrapf("Error parsing time value for http_write_timeout: {{err}}", err))
 			}
+			server.WriteTimeout = writeTimeout
 		}
 
-		fmt.Printf("\n\nserver:\n%#v\n", server)
+		if idleTimeoutInterface, ok := ln.config["http_idle_timeout"]; ok {
+			idleTimeout, err := parseutil.ParseDurationSecond(idleTimeoutInterface)
+			if err != nil {
+				server.ErrorLog.Fatal(
+					errwrap.Wrapf("Error parsing time value for http_idle_timeout: {{err}}", err))
+			}
+			server.IdleTimeout = idleTimeout
+		}
 
 		go server.Serve(ln.Listener)
 	}
